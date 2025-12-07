@@ -1,13 +1,29 @@
 const { Pool } = require('pg');
+const url = process.env.DATABASE_URL || '';
+
+// Determine whether to use SSL.
+// - Railway internal hosts ("*.railway.internal" or "postgres.railway.internal") typically do NOT use SSL.
+// - Public hosts (railway.app, rlwy.net, proxy hosts) require SSL.
+const shouldUseSSL = (() => {
+  if (!url) return false;
+  const lc = url.toLowerCase();
+  if (lc.includes('.railway.internal') || lc.includes('.railway.internal:') || lc.includes('postgres.railway.internal')) {
+    return false;
+  }
+  if (lc.includes('railway.app') || lc.includes('rlwy.net') || lc.includes('proxy')) {
+    return true;
+  }
+  // Default to true in production unless explicitly internal
+  if (process.env.NODE_ENV === 'production') return true;
+  return false;
+})();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
-  ssl: process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('railway.app') || process.env.DATABASE_URL?.includes('rlwy.net')
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: shouldUseSSL ? { rejectUnauthorized: false } : false,
 });
 
 pool.on('connect', () => {
