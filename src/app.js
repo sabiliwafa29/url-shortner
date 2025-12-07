@@ -63,6 +63,15 @@ app.get('/api-docs.json', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
+// Root route (platforms may probe `/` for health) — return 200
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'URL Shortener API',
+    docs: process.env.BASE_URL ? `${process.env.BASE_URL}/api-docs` : '/api-docs'
+  });
+});
+
 app.use('/', urlRoutes);
 
 // 404 handler
