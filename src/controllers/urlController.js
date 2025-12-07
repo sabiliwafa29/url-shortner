@@ -88,7 +88,8 @@ exports.createShortUrl = async (req, res) => {
         JSON.stringify({
           id: url.id,
           originalUrl: url.original_url,
-          expiresAt: url.expires_at
+          expiresAt: url.expires_at,
+          isActive: url.is_active === undefined ? true : url.is_active
         })
       );
     } catch (err) {
