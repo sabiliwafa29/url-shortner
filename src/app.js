@@ -3,6 +3,11 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
+const swaggerUi = require('swagger-ui-express');
+const logger = require('./config/logger');
+const swaggerSpec = require('./config/swagger');
+const { errorHandler, notFound } = require('./middleware/errorHandler');
 const urlRoutes = require('./routes/urlRoutes');
 const authRoutes = require('./routes/authRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
@@ -19,6 +24,9 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// HTTP request logging
+app.use(morgan('combined', { stream: logger.stream }));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -40,30 +48,33 @@ app.get('/health', (req, res) => {
   });
 });
 
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'URL Shortener API Docs'
+}));
+
+// Swagger JSON
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/', urlRoutes);
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
+app.use(notFound);
 
 // Global error handler
-app.use((err, req, res, next) => {
-  console.error('Global error:', err);
-  
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
-});
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`
+  logger.info(`
 ╔════════════════════════════════════════╗
 ║   URL Shortener API Server Running    ║
 ║   Port: ${PORT}                       ║

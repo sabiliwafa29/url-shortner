@@ -81,15 +81,19 @@ exports.createShortUrl = async (req, res) => {
     const url = result.rows[0];
 
     // Cache in Redis for fast lookups (TTL: 7 days)
-    await redis.setex(
-      `url:${shortCode}`,
-      7 * 24 * 60 * 60,
-      JSON.stringify({
-        id: url.id,
-        originalUrl: url.original_url,
-        expiresAt: url.expires_at
-      })
-    );
+    try {
+      await redis.setex(
+        `url:${shortCode}`,
+        7 * 24 * 60 * 60,
+        JSON.stringify({
+          id: url.id,
+          originalUrl: url.original_url,
+          expiresAt: url.expires_at
+        })
+      );
+    } catch (err) {
+      // Redis not available, continue without cache
+    }
 
     res.status(201).json({
       success: true,
@@ -122,7 +126,12 @@ exports.redirectUrl = async (req, res) => {
     let urlData;
 
     // Try to get from Redis cache first
-    const cached = await redis.get(`url:${shortCode}`);
+    let cached = null;
+    try {
+      cached = await redis.get(`url:${shortCode}`);
+    } catch (err) {
+      // Redis not available, skip cache
+    }
     
     if (cached) {
       urlData = JSON.parse(cached);
@@ -147,11 +156,15 @@ exports.redirectUrl = async (req, res) => {
       };
 
       // Cache for future requests
-      await redis.setex(
-        `url:${shortCode}`,
-        7 * 24 * 60 * 60,
-        JSON.stringify(urlData)
-      );
+      try {
+        await redis.setex(
+          `url:${shortCode}`,
+          7 * 24 * 60 * 60,
+          JSON.stringify(urlData)
+        );
+      } catch (err) {
+        // Redis not available, continue without cache
+      }
     }
 
     // Check if URL is active
@@ -273,7 +286,11 @@ exports.deleteUrl = async (req, res) => {
     }
 
     // Remove from cache
-    await redis.del(`url:${result.rows[0].short_code}`);
+    try {
+      await redis.del(`url:${result.rows[0].short_code}`);
+    } catch (err) {
+      // Redis not available, continue
+    }
 
     res.json({ success: true, message: 'URL deleted successfully' });
   } catch (error) {

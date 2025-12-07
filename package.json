@@ -7,7 +7,9 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "migrate": "node migrations/migrate.js",
-    "test": "jest --coverage"
+    "seed": "node migrations/seed.js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "keywords": ["url-shortener", "api", "nodejs", "postgresql"],
   "author": "Your Name",
@@ -23,7 +25,11 @@
     "express-rate-limit": "^7.1.5",
     "joi": "^17.11.0",
     "qrcode": "^1.5.3",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "winston": "^3.11.0",
+    "morgan": "^1.10.0",
+    "swagger-ui-express": "^5.0.0",
+    "swagger-jsdoc": "^6.2.8"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

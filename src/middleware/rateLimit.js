@@ -23,23 +23,38 @@ function createRateLimiter(options = {}) {
     // Use Redis for distributed rate limiting
     store: {
       async increment(key) {
-        const count = await redis.incr(key);
-        if (count === 1) {
-          await redis.expire(key, Math.ceil(windowMs / 1000));
+        try {
+          const count = await redis.incr(key);
+          if (count === 1) {
+            await redis.expire(key, Math.ceil(windowMs / 1000));
+          }
+          return {
+            totalHits: count,
+            resetTime: new Date(Date.now() + windowMs)
+          };
+        } catch (err) {
+          // Redis not available, allow request
+          return {
+            totalHits: 1,
+            resetTime: new Date(Date.now() + windowMs)
+          };
         }
-        return {
-          totalHits: count,
-          resetTime: new Date(Date.now() + windowMs)
-        };
       },
       
       async decrement(key) {
-        const count = await redis.decr(key);
-        return;
+        try {
+          await redis.decr(key);
+        } catch (err) {
+          // Redis not available, ignore
+        }
       },
       
       async resetKey(key) {
-        await redis.del(key);
+        try {
+          await redis.del(key);
+        } catch (err) {
+          // Redis not available, ignore
+        }
       }
     }
   });
