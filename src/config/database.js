@@ -32,7 +32,8 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
   console.error('❌ Unexpected database error:', err);
-  process.exit(-1);
+  // Do not crash the entire process on a single client error; log and allow
+  // the application to attempt recovery or handle the error per-request.
 });
 
 module.exports = pool;

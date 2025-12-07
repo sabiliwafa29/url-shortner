@@ -48,6 +48,14 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Ensure the platform probing `/` (GET or HEAD) gets a 200 quickly
+app.use((req, res, next) => {
+  if ((req.path === '/' || req.path === '') && (req.method === 'GET' || req.method === 'HEAD')) {
+    return res.json({ status: 'ok', service: 'URL Shortener API' });
+  }
+  return next();
+});
+
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
