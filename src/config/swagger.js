@@ -20,10 +20,6 @@ const options = {
       {
         url: process.env.BASE_URL || 'http://localhost:3000',
         description: 'Development server'
-      },
-      {
-        url: 'https://api.urlshortener.com',
-        description: 'Production server'
       }
     ],
     components: {
