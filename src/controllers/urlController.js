@@ -57,7 +57,11 @@ exports.createShortUrl = async (req, res) => {
 
           const inserted = result.rows[0];
           const shortUrlTmp = `${process.env.BASE_URL}/${shortCode}`;
+          // Ensure we return a usable shortUrl immediately
+          shortUrl = shortUrlTmp;
+
           try {
+            // Try a best-effort QR generation synchronously for custom aliases
             const qrCodeDataUrl = await QRCode.toDataURL(shortUrlTmp);
             await client.query('UPDATE urls SET qr_code = $1 WHERE id = $2', [qrCodeDataUrl, inserted.id]);
             // Attach qr to the returned object for response
@@ -66,7 +70,8 @@ exports.createShortUrl = async (req, res) => {
             // If QR generation fails, log and continue — the URL is still valid
             console.error('QR generation/update error:', err);
           }
-          // Enqueue QR generation job (do not block response)
+
+          // Enqueue QR generation job as a fallback/worker (do not block response)
           try {
             await qrQueue.add('generate', { urlId: inserted.id, shortCode, shortUrl: shortUrlTmp });
           } catch (err) {
@@ -87,6 +92,8 @@ exports.createShortUrl = async (req, res) => {
             );
 
             // success
+            // produce a shortUrl for response; actual QR will be generated asynchronously
+            shortUrl = `${process.env.BASE_URL}/${shortCode}`;
             break;
           } catch (err) {
             // If unique violation, try again with a new code
@@ -105,6 +112,10 @@ exports.createShortUrl = async (req, res) => {
 
 
       const url = result.rows[0];
+      // if shortUrl wasn't set earlier (edge-case), set it now
+      if (!shortUrl && url && url.short_code) {
+        shortUrl = `${process.env.BASE_URL}/${url.short_code}`;
+      }
 
     // No longer generating QR code inline; it will be handled by the job queue
 
@@ -132,6 +143,8 @@ exports.createShortUrl = async (req, res) => {
         shortCode: url.short_code,
         shortUrl,
         qrCode: url.qr_code,
+        // indicate whether QR generation is pending (worker will populate qr_code)
+        qrPending: url.qr_code ? false : true,
         expiresAt: url.expires_at,
         createdAt: url.created_at
       }
