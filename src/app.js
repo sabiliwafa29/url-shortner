@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 const logger = require('./config/logger');
 const swaggerSpec = require('./config/swagger');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -80,6 +81,9 @@ app.get('/', (req, res) => {
   });
 });
 
+// Serve static frontend from /public if present
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
 app.use('/', urlRoutes);
 
 // 404 handler
@@ -87,17 +91,5 @@ app.use(notFound);
 
 // Global error handler
 app.use(errorHandler);
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  logger.info(`
-╔════════════════════════════════════════╗
-║   URL Shortener API Server Running    ║
-║   Port: ${PORT}                       ║
-║   Environment: ${process.env.NODE_ENV || 'development'}           ║
-╚════════════════════════════════════════╝
-  `);
-});
 
 module.exports = app;

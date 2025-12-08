@@ -219,6 +219,25 @@ npm run test:coverage
 
 \`\`\`bash
 docker build -t url-shortener .
+
+### Run Worker (QR Generation)
+
+This project uses a BullMQ queue to generate QR codes asynchronously. In production it's recommended to run the worker as a separate process so it can scale independently from the web server.
+
+- Start the worker (single-process / production):
+```bash
+npm run worker
+```
+
+- Start the worker in development (auto-restart):
+```bash
+npm run worker:dev
+```
+
+Railway / Deployment notes:
+- If you're using Railway (or another host that supports multiple processes), create one service to run `npm start` (web) and a second service to run `npm run worker` (worker). Ensure `REDIS_URL` is set for the worker.
+- If you choose to run the worker in the same process as the web server, the current code will also start the worker automatically when the server requires the worker module. Running it separately is preferred in production.
+
 docker run -p 3000:3000 --env-file .env url-shortener
 \`\`\`
 
