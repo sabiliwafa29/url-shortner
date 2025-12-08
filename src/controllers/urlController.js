@@ -251,6 +251,23 @@ exports.redirectUrl = async (req, res) => {
       }
     }
 
+    // If client expects JSON (fetch/ajax), return the target URL instead of issuing a redirect.
+    const accept = (req.headers.accept || '').toLowerCase();
+    const isAjax = req.xhr || accept.includes('application/json') || accept.includes('text/json');
+
+    const responsePayload = {
+      success: true,
+      shortCode,
+      originalUrl: urlData.originalUrl,
+      targetUrl: target,
+      shortUrl: `${process.env.BASE_URL}/${shortCode}`
+    };
+
+    if (isAjax) {
+      return res.json(responsePayload);
+    }
+
+    // Otherwise, perform a normal redirect for browser navigation
     res.redirect(301, target);
 
   } catch (error) {
