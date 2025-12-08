@@ -21,64 +21,92 @@ exports.createShortUrl = async (req, res) => {
     }
 
     let shortCode = customAlias;
-    let attempts = 0;
-    const maxAttempts = 5;
+    let shortUrl = null;
 
-    await client.query('BEGIN');
+      const maxInsertAttempts = 5;
+      let result;
 
-    // If custom alias provided, check if available
-    if (customAlias) {
-      const existingAlias = await client.query(
-        'SELECT id FROM urls WHERE short_code = $1 OR custom_alias = $1',
-        [customAlias]
-      );
+      // If custom alias provided, perform transactional check & insert
+        if (customAlias) {
+          await client.query('BEGIN');
+          const existingAlias = await client.query(
+            'SELECT id FROM urls WHERE short_code = $1 OR custom_alias = $1',
+            [customAlias]
+          );
 
-      if (existingAlias.rows.length > 0) {
-        await client.query('ROLLBACK');
-        return res.status(409).json({ error: 'Custom alias already taken' });
+          if (existingAlias.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ error: 'Custom alias already taken' });
+          }
+
+          const expiresAt = expiresIn
+            ? new Date(Date.now() + expiresIn * 24 * 60 * 60 * 1000)
+            : null;
+
+          // Insert without QR code first to ensure uniqueness; generate QR after successful insert
+          result = await client.query(
+            `INSERT INTO urls (
+              user_id, original_url, short_code, custom_alias, 
+              title, qr_code, expires_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *`,
+            [userId, originalUrl, shortCode, customAlias, title, null, expiresAt]
+          );
+
+          await client.query('COMMIT');
+
+          const inserted = result.rows[0];
+          const shortUrlTmp = `${process.env.BASE_URL}/${shortCode}`;
+          try {
+            const qrCodeDataUrl = await QRCode.toDataURL(shortUrlTmp);
+            await client.query('UPDATE urls SET qr_code = $1 WHERE id = $2', [qrCodeDataUrl, inserted.id]);
+            // Attach qr to the returned object for response
+            inserted.qr_code = qrCodeDataUrl;
+          } catch (err) {
+            // If QR generation fails, log and continue — the URL is still valid
+            console.error('QR generation/update error:', err);
+          }
+          // Enqueue QR generation job (do not block response)
+          try {
+            await qrQueue.add('generate', { urlId: inserted.id, shortCode, shortUrl: shortUrlTmp });
+          } catch (err) {
+            console.error('Failed to enqueue QR job for custom alias:', err);
+          }
+
+        for (let attempt = 0; attempt < maxInsertAttempts; attempt++) {
+          shortCode = generateRandomCode(6);
+
+          try {
+            result = await client.query(
+              `INSERT INTO urls (
+                user_id, original_url, short_code, custom_alias, 
+                title, qr_code, expires_at
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+              RETURNING *`,
+              [userId, originalUrl, shortCode, null, title, null, expiresAt]
+            );
+
+            // success
+            break;
+          } catch (err) {
+            // If unique violation, try again with a new code
+            if (err && err.code === '23505') {
+              // continue to next attempt
+              if (attempt === maxInsertAttempts - 1) {
+                return res.status(500).json({ error: 'Failed to generate unique code' });
+              }
+              continue;
+            }
+            // other errors -> rethrow to outer handler
+            throw err;
+          }
+        }
       }
-    } else {
-      // Generate unique short code
-      while (attempts < maxAttempts) {
-        shortCode = generateRandomCode(6);
-        
-        const existing = await client.query(
-          'SELECT id FROM urls WHERE short_code = $1',
-          [shortCode]
-        );
 
-        if (existing.rows.length === 0) break;
-        attempts++;
-      }
 
-      if (attempts === maxAttempts) {
-        await client.query('ROLLBACK');
-        return res.status(500).json({ error: 'Failed to generate unique code' });
-      }
-    }
+      const url = result.rows[0];
 
-    // Calculate expiration date
-    const expiresAt = expiresIn 
-      ? new Date(Date.now() + expiresIn * 24 * 60 * 60 * 1000)
-      : null;
-
-    // Generate QR Code
-    const shortUrl = `${process.env.BASE_URL}/${shortCode}`;
-    const qrCodeDataUrl = await QRCode.toDataURL(shortUrl);
-
-    // Insert into database
-    const result = await client.query(
-      `INSERT INTO urls (
-        user_id, original_url, short_code, custom_alias, 
-        title, qr_code, expires_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *`,
-      [userId, originalUrl, shortCode, customAlias, title, qrCodeDataUrl, expiresAt]
-    );
-
-    await client.query('COMMIT');
-
-    const url = result.rows[0];
+    // No longer generating QR code inline; it will be handled by the job queue
 
     // Cache in Redis for fast lookups (TTL: 7 days)
     try {

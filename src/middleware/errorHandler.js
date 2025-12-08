@@ -92,7 +92,7 @@ const errorHandler = (err, req, res, next) => {
  * Handle 404 errors
  */
 const notFound = (req, res, next) => {
-  const error = new AppError(`Route ${req.originalUrl} not found`, 404);
+  const error = new AppError('Route not found', 404);
   next(error);
 };
 

@@ -88,16 +88,4 @@ app.use(notFound);
 // Global error handler
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  logger.info(`
-╔════════════════════════════════════════╗
-║   URL Shortener API Server Running    ║
-║   Port: ${PORT}                       ║
-║   Environment: ${process.env.NODE_ENV || 'development'}           ║
-╚════════════════════════════════════════╝
-  `);
-});
-
 module.exports = app;

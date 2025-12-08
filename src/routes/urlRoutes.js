@@ -23,8 +23,8 @@ const { validateUrl } = require('../middleware/validator');
  *       404:
  *         description: URL not found
  */
-// Public route - redirect
-router.get('/:shortCode', urlController.redirectUrl);
+// Public route - redirect (only match alphanumeric short codes/custom aliases)
+router.get('/:shortCode([A-Za-z0-9]+)', urlController.redirectUrl);
 
 /**
  * @swagger
