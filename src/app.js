@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 const logger = require('./config/logger');
 const swaggerSpec = require('./config/swagger');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -79,6 +80,9 @@ app.get('/', (req, res) => {
     docs: process.env.BASE_URL ? `${process.env.BASE_URL}/api-docs` : '/api-docs'
   });
 });
+
+// Serve static frontend from /public if present
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.use('/', urlRoutes);
 
