@@ -231,7 +231,27 @@ exports.redirectUrl = async (req, res) => {
     ).catch(err => console.error('Click count update error:', err));
 
     // Redirect to original URL
-    res.redirect(301, urlData.originalUrl);
+    // Normalize URL: ensure it has http/https scheme. If missing, assume https://
+    let target = urlData.originalUrl;
+    try {
+      const parsed = new URL(target);
+      // accept only http/https schemes for redirects
+      if (!/^https?:$/i.test(parsed.protocol)) {
+        return res.status(400).json({ error: 'Unsupported URL scheme' });
+      }
+      target = parsed.toString();
+    } catch (err) {
+      // If parsing fails, try to prepend https:// and re-parse
+      try {
+        const withProto = `https://${target}`;
+        const parsed2 = new URL(withProto);
+        target = parsed2.toString();
+      } catch (err2) {
+        return res.status(400).json({ error: 'Invalid target URL' });
+      }
+    }
+
+    res.redirect(301, target);
 
   } catch (error) {
     console.error('Redirect error:', error);
