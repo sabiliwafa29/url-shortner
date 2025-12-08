@@ -140,8 +140,8 @@ exports.createShortUrl = async (req, res) => {
       data: {
         id: url.id,
         originalUrl: url.original_url,
-        shortCode: url.short_code,
-        shortUrl,
+          customAlias: url.custom_alias || null,
+          shortUrl: shortUrl || `${process.env.BASE_URL}/${url.custom_alias || url.short_code}`,
         qrCode: url.qr_code,
         // indicate whether QR generation is pending (worker will populate qr_code)
         qrPending: url.qr_code ? false : true,
@@ -329,7 +329,8 @@ exports.getUserUrls = async (req, res) => {
 
     const urls = result.rows.map(url => ({
       ...url,
-      shortUrl: `${process.env.BASE_URL}/${url.short_code}`
+      customAlias: url.custom_alias || null,
+      shortUrl: `${process.env.BASE_URL}/${url.custom_alias || url.short_code}`
     }));
 
     res.json({

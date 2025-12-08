@@ -52,7 +52,7 @@
       jsonResult.textContent = JSON.stringify(data, null, 2);
       resultSection.classList.remove('hidden');
 
-      const shortUrl = data.data && (data.data.shortUrl || (data.data.shortCode? window.location.origin + '/' + data.data.shortCode : null));
+      const shortUrl = data.data && (data.data.shortUrl || (data.data.customAlias ? window.location.origin + '/' + data.data.customAlias : (data.data.shortCode ? window.location.origin + '/' + data.data.shortCode : null)));
       if(shortUrl){
         shortLink.innerHTML = `<a href="${shortUrl}" target="_blank">${shortUrl}</a>`;
         openLinkBtn.onclick = ()=> window.open(shortUrl, '_blank');
