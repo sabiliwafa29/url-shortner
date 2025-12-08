@@ -140,14 +140,9 @@ exports.createShortUrl = async (req, res) => {
       data: {
         id: url.id,
         originalUrl: url.original_url,
-<<<<<<< HEAD
         shortCode: url.short_code,
         customAlias: url.custom_alias || null,
         shortUrl,
-=======
-          customAlias: url.custom_alias || null,
-          shortUrl: shortUrl || `${process.env.BASE_URL}/${url.custom_alias || url.short_code}`,
->>>>>>> fb0171bb66139e0fdfb171ddb32a6e43fde95c8b
         qrCode: url.qr_code,
         // indicate whether QR generation is pending (worker will populate qr_code)
         qrPending: url.qr_code ? false : true,
