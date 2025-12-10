@@ -2,6 +2,7 @@ const pool = require('../config/database');
 const redis = require('../config/redis');
 const { generateRandomCode, encodeBase62 } = require('../utils/generateShortCode');
 const QRCode = require('qrcode');
+const qrQueue = require('../queues/qrQueue');
 
 /**
  * Create shortened URL
@@ -10,25 +11,28 @@ exports.createShortUrl = async (req, res) => {
   const client = await pool.connect();
   
   try {
-    const { originalUrl, customAlias, expiresIn, title } = req.body;
-    const userId = req.user ? req.user.id : null;
+      const { originalUrl, customAlias, expiresIn, title } = req.body;
+      const userId = req.user ? req.user.id : null;
 
-    // Validate URL
-    try {
-      new URL(originalUrl);
-    } catch (error) {
-      return res.status(400).json({ error: 'Invalid URL format' });
-    }
+      // Validate URL
+      try {
+        new URL(originalUrl);
+      } catch (error) {
+        return res.status(400).json({ error: 'Invalid URL format' });
+      }
 
-    let shortCode = customAlias;
-    let shortUrl = null;
-
-      const maxInsertAttempts = 5;
+      let shortCode = customAlias;
+      let shortUrl = null;
       let result;
 
+      const expiresAt = expiresIn
+        ? new Date(Date.now() + expiresIn * 24 * 60 * 60 * 1000)
+        : null;
+
       // If custom alias provided, perform transactional check & insert
-        if (customAlias) {
-          await client.query('BEGIN');
+      if (customAlias) {
+        await client.query('BEGIN');
+        try {
           const existingAlias = await client.query(
             'SELECT id FROM urls WHERE short_code = $1 OR custom_alias = $1',
             [customAlias]
@@ -38,10 +42,6 @@ exports.createShortUrl = async (req, res) => {
             await client.query('ROLLBACK');
             return res.status(409).json({ error: 'Custom alias already taken' });
           }
-
-          const expiresAt = expiresIn
-            ? new Date(Date.now() + expiresIn * 24 * 60 * 60 * 1000)
-            : null;
 
           // Insert without QR code first to ensure uniqueness; generate QR after successful insert
           result = await client.query(
@@ -78,6 +78,15 @@ exports.createShortUrl = async (req, res) => {
             console.error('Failed to enqueue QR job for custom alias:', err);
           }
 
+          // set result so downstream code can use it
+          // fall through to response
+        } catch (err) {
+          try { await client.query('ROLLBACK'); } catch (e) {}
+          throw err;
+        }
+      } else {
+        // No custom alias: attempt to insert with random codes and retry on collisions
+        const maxInsertAttempts = 5;
         for (let attempt = 0; attempt < maxInsertAttempts; attempt++) {
           shortCode = generateRandomCode(6);
 
@@ -110,8 +119,7 @@ exports.createShortUrl = async (req, res) => {
         }
       }
 
-
-      const url = result.rows[0];
+      const url = result && result.rows ? result.rows[0] : null;
       // if shortUrl wasn't set earlier (edge-case), set it now
       if (!shortUrl && url && url.short_code) {
         shortUrl = `${process.env.BASE_URL}/${url.short_code}`;

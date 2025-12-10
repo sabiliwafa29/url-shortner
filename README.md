@@ -1,6 +1,10 @@
 # URL Shortener Backend API
 
+[![CI](https://github.com/sabiliwafa29/url-shortner/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sabiliwafa29/url-shortner/actions/workflows/ci.yml?query=branch%3Amain)
+
 Production-ready URL shortener service built with Node.js, PostgreSQL, Redis, and JWT authentication.
+
+[![Coverage](https://img.shields.io/badge/coverage-unknown-yellow.svg)](https://example.com/coverage)
 
 ## Features
 
@@ -83,6 +87,30 @@ npm run dev
 \`\`\`
 
 The API will be available at `http://localhost:3000`
+
+## Coverage
+
+- **Badge placeholder:** The coverage badge above is a placeholder. After you enable coverage upload in CI (Codecov/Coveralls or similar), replace the badge URL with the provider's badge URL.
+
+- **Quick enable (recommended):** add a step in your GitHub Actions workflow to upload `coverage/lcov.info` to Codecov. Example snippet to add to `.github/workflows/ci.yml` after tests:
+
+```yaml
+# Upload coverage to Codecov
+- name: Upload coverage to Codecov
+  uses: codecov/codecov-action@v4
+  with:
+    files: ./coverage/lcov.info
+    fail_ci_if_error: false
+
+# Optional: upload coverage artifact for inspection
+- name: Upload coverage artifact
+  uses: actions/upload-artifact@v4
+  with:
+    name: coverage-report
+    path: coverage/lcov.info
+```
+
+After configuring the workflow, update the coverage badge's target URL to the provider's badge so it reflects real coverage metrics.
 
 ## API Documentation
 

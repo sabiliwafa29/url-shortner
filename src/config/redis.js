@@ -15,19 +15,24 @@ const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
   enableOfflineQueue: false,
 });
 
-// Try to connect but don't crash if it fails
-redis.connect().catch(() => {
-  console.warn('⚠️  Redis not available - running without cache (OK for development)');
-});
+// In test environment do not attempt to connect (keep silent)
+if (process.env.NODE_ENV !== 'test') {
+  // Try to connect but don't crash if it fails
+  redis.connect().catch(() => {
+    console.warn('⚠️  Redis not available - running without cache (OK for development)');
+  });
 
-redis.on('connect', () => {
-  console.log('✅ Connected to Redis');
-});
+  redis.on('connect', () => {
+    console.log('✅ Connected to Redis');
+  });
+}
 
 redis.on('error', (err) => {
   // Only log once, don't spam console
   if (!redis._errorLogged) {
-    console.warn('⚠️  Redis connection error - app will continue without cache');
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn('⚠️  Redis connection error - app will continue without cache');
+    }
     redis._errorLogged = true;
   }
 });
