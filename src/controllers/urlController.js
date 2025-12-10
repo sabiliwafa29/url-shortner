@@ -148,8 +148,9 @@ exports.createShortUrl = async (req, res) => {
       data: {
         id: url.id,
         originalUrl: url.original_url,
-          customAlias: url.custom_alias || null,
-          shortUrl: shortUrl || `${process.env.BASE_URL}/${url.custom_alias || url.short_code}`,
+        shortCode: url.short_code,
+        customAlias: url.custom_alias || null,
+        shortUrl,
         qrCode: url.qr_code,
         // indicate whether QR generation is pending (worker will populate qr_code)
         qrPending: url.qr_code ? false : true,
@@ -185,6 +186,10 @@ exports.redirectUrl = async (req, res) => {
     
     if (cached) {
       urlData = JSON.parse(cached);
+      // Older cache entries may not include `isActive`. Treat undefined as active.
+      if (typeof urlData.isActive === 'undefined') {
+        urlData.isActive = true;
+      }
     } else {
       // Fallback to database
       const result = await pool.query(
@@ -217,8 +222,8 @@ exports.redirectUrl = async (req, res) => {
       }
     }
 
-    // Check if URL is active
-    if (!urlData.isActive) {
+    // Check if URL is active (explicit false means deactivated)
+    if (urlData.isActive === false) {
       return res.status(410).json({ error: 'URL has been deactivated' });
     }
 
