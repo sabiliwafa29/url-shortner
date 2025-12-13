@@ -49,13 +49,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Ensure the platform probing `/` (GET or HEAD) gets a 200 quickly
-app.use((req, res, next) => {
-  if ((req.path === '/' || req.path === '') && (req.method === 'GET' || req.method === 'HEAD')) {
-    return res.json({ status: 'ok', service: 'URL Shortener API' });
-  }
-  return next();
-});
+// Serve static frontend from /public if present. Place before the root
+// handler so `GET /` will return `public/index.html` when available.
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -72,7 +68,7 @@ app.get('/api-docs.json', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
-// Root route (platforms may probe `/` for health) — return 200
+// Root route (fallback health) — if no static `index.html` served, return JSON
 app.get('/', (req, res) => {
   res.json({
     status: 'ok',
@@ -80,9 +76,6 @@ app.get('/', (req, res) => {
     docs: process.env.BASE_URL ? `${process.env.BASE_URL}/api-docs` : '/api-docs'
   });
 });
-
-// Serve static frontend from /public if present
-app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.use('/', urlRoutes);
 
