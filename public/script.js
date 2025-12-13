@@ -130,10 +130,30 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || JSON.stringify(data));
+      // Robust response handling: support JSON and non-JSON (HTML error pages)
+      let data = null;
+      try {
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          data = await res.json();
+        } else {
+          // Fallback: read text for HTML/error pages
+          const txt = await res.text();
+          data = { error: txt, _rawText: txt };
+        }
+      } catch (e) {
+        // parsing failed
+        data = { error: 'Unable to parse response', _err: String(e) };
+      }
 
-      const info = data.data;
+      if (!res.ok) {
+        const errMsg = (data && (data.error || data.message)) || `${res.status} ${res.statusText}`;
+        console.error('Shorten request failed', { status: res.status, statusText: res.statusText, data });
+        showToast('Create link failed: ' + (errMsg || 'Unknown error'), 'error');
+        return;
+      }
+
+      const info = data && data.data ? data.data : data;
       const href = info.shortUrl || `${location.origin}/${info.shortCode || info.customAlias}`;
       resultLink.textContent = href;
       resultLink.href = href;
