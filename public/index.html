@@ -21,7 +21,8 @@
       <nav class="header-nav" aria-label="Main">
         <!-- <a class="btn-ghost" href="#features">Features</a>
         <a class="btn-ghost" href="#pricing">Pricing</a> -->
-        <a class="btn-primary" href="#">Get Started</a>
+        <button id="signOutBtn" class="btn-ghost hidden" type="button">Sign out</button>
+        <a id="getStartedBtn" class="btn-primary" href="#">Get Started</a>
       </nav>
     </div>
   </header>
@@ -85,6 +86,31 @@
   <footer class="footer">
     <div class="container">© <span id="year"></span> URL Shortener — All rights reserved</div>
   </footer>
+
+  <!-- Login modal -->
+  <div id="loginModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-overlay" data-dismiss></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <button class="modal-close" aria-label="Close">×</button>
+      <h3 id="loginTitle">Sign in to create links</h3>
+      <form id="loginForm" class="login-form">
+        <label class="sr-only" for="loginEmail">Email</label>
+        <input id="loginEmail" name="email" type="email" placeholder="you@example.com" required />
+
+        <label class="sr-only" for="loginPassword">Password</label>
+        <input id="loginPassword" name="password" type="password" placeholder="Password" required />
+
+        <div class="modal-actions">
+          <button type="submit" class="cta">Sign in</button>
+          <button type="button" class="btn-ghost" data-dismiss>Cancel</button>
+        </div>
+
+        <div id="loginMsg" class="form-hint" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+  <!-- Toast container -->
+  <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
 
   <script src="/script.js"></script>
 </body>
