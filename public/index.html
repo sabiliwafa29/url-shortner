@@ -3,6 +3,79 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>URL Shortener — Build stronger digital connections</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="bg-decor">
+    <!-- Decorative SVGs scattered -->
+    <svg class="decor decor-star d1" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffffff" fill-opacity="0.06" d="M12 2l2.4 4.9L20 8l-4 3.8L17 20l-5-2.6L7 20l1-8.2L4 8l5.6-1.1L12 2z"/></svg>
+    <svg class="decor decor-snow s1" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffffff" fill-opacity="0.04" d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" stroke="#fff" stroke-opacity="0.04" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg class="decor decor-star d2" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffffff" fill-opacity="0.05" d="M12 3l1.9 3.9L18 8l-3 2.7L16 17l-4-2-4 2 .9-6.3L6 8l4.1-1.1L12 3z"/></svg>
+    <svg class="decor decor-snow s2" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffffff" fill-opacity="0.03" d="M12 4v2M12 18v2M8 8l8 8M8 16l8-8" stroke="#fff" stroke-opacity="0.03" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </div>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <h1 class="brand">URL Shortener</h1>
+      <nav class="header-nav" aria-label="Main">
+        <a class="btn-ghost" href="#features">Features</a>
+        <a class="btn-ghost" href="#pricing">Pricing</a>
+        <a class="btn-primary" href="#">Get Started</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main-grid">
+    <section class="hero">
+      <h2 class="hero-title">Build stronger digital connections</h2>
+      <p class="hero-sub">Shorten links, generate QR codes, and create focused landing pages — fast, secure, and reliable. No tracking, just reliable redirects and analytics.</p>
+    </section>
+
+    <aside class="card-card">
+      <div class="card">
+        <div class="card-tabs" role="tablist" aria-label="Tools">
+          <button class="tab" role="tab" aria-selected="false" data-tab="short">
+            <svg class="icon icon-orange" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#FF6B35"/></svg>
+            <span>Short Link</span>
+          </button>
+          <button class="tab selected" role="tab" aria-selected="true" data-tab="qr">
+            <svg class="icon icon-blue" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" fill="#0052FF"/><rect x="14" y="3" width="7" height="7" fill="#0052FF"/><rect x="3" y="14" width="7" height="7" fill="#0052FF"/></svg>
+            <span>QR Code</span>
+          </button>
+        </div>
+
+        <div class="card-body">
+          <h3 class="card-title">Shorten a long link</h3>
+          <p class="card-sub">No credit card required</p>
+
+          <form class="shorten-form" action="#" onsubmit="return false;" aria-label="Shorten link form">
+            <label class="sr-only" for="url">URL</label>
+            <div class="input-row">
+              <input id="url" name="url" type="url" placeholder="https://example.com/my-long-url" required />
+              <button class="cta" id="shortenBtn" type="submit">Get your link for free
+                <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M13 5l7 7-7 7v-4H4v-6h9V5z"/></svg>
+              </button>
+            </div>
+            <div class="form-hint">Instant links and optional analytics — simple and private.</div>
+          </form>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <div class="container">© <span id="year"></span> URL Shortener — All rights reserved</div>
+  </footer>
+
+  <script src="/script.js"></script>
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>URL Shortener</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
