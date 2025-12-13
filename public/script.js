@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultLink = document.getElementById('resultLink');
   const resultQr = document.getElementById('resultQr');
   const copyBtn = document.getElementById('copyBtn');
+  const cardBody = document.querySelector('.card-body');
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -106,6 +107,76 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = document.createElement('img'); img.src = info.qrCode; resultQr.appendChild(img);
       }
       resultBox.hidden = false;
+
+      // Replace the card body with a compact result view that shows the shortened link
+      // and a copy button next to it. Provide a "Short another" button to restore form.
+      try {
+        if (cardBody) {
+          // remove any previous result view
+          const prev = cardBody.querySelector('.short-result'); if (prev) prev.remove();
+          // hide the form while showing the compact view
+          form.hidden = true;
+
+          const view = document.createElement('div');
+          view.className = 'short-result';
+
+          const row = document.createElement('div');
+          row.className = 'result-inner';
+
+          const a = document.createElement('a');
+          a.className = 'result-link';
+          a.href = href;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.textContent = href;
+
+          const cb = document.createElement('button');
+          cb.className = 'copy-btn';
+          cb.type = 'button';
+          // inline SVG + label for visual polish
+          cb.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 3H8a2 2 0 0 0-2 2v12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="8" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Copy</span>';
+
+          row.appendChild(a);
+          row.appendChild(cb);
+          view.appendChild(row);
+
+          const again = document.createElement('div');
+          again.style.marginTop = '10px';
+          const againBtn = document.createElement('button');
+          againBtn.className = 'btn-ghost';
+          againBtn.type = 'button';
+          againBtn.textContent = 'Short another';
+          again.appendChild(againBtn);
+          view.appendChild(again);
+
+          cardBody.appendChild(view);
+
+          cb.addEventListener('click', async () => {
+            const original = cb.innerHTML;
+            try {
+              await navigator.clipboard.writeText(href);
+              // visual feedback on the button itself + toast
+              cb.classList.add('copied');
+              cb.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Copied</span>';
+              showToast('Copied', 'success');
+              setTimeout(() => {
+                try { cb.classList.remove('copied'); cb.innerHTML = original; } catch(e){}
+              }, 1400);
+            } catch (e) {
+              showToast('Copy failed', 'error');
+            }
+          });
+
+          againBtn.addEventListener('click', () => {
+            try { view.remove(); } catch (e) {}
+            form.hidden = false;
+            resultBox.hidden = true;
+            urlInput.value = '';
+            aliasInput.value = '';
+            urlInput.focus();
+          });
+        }
+      } catch (e) { /* ignore UI errors */ }
 
     } catch (err) {
       showToast('Create link failed: ' + (err.message || err), 'error');
