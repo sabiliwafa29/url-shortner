@@ -123,6 +123,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Ensure the shorten button reliably triggers the form submit handler.
+  // Some browsers or nested elements can interfere with native submit; use requestSubmit() as a robust fallback.
+  const shortenBtnEl = document.getElementById('shortenBtn');
+  if (shortenBtnEl && form) {
+    shortenBtnEl.addEventListener('click', (ev) => {
+      try {
+        // debug helper
+        if (window && window.console && typeof window.console.debug === 'function') window.console.debug('shortenBtn clicked');
+      } catch(e){}
+      // Prefer requestSubmit when available (respects form validation)
+      if (typeof form.requestSubmit === 'function') {
+        ev.preventDefault();
+        form.requestSubmit();
+      } else {
+        // Fallback: dispatch submit event
+        ev.preventDefault();
+        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
+    });
+  }
+
   // --- Modal login: open/close and submit ---
   const getStarted = document.getElementById('getStartedBtn');
   const modal = document.getElementById('loginModal');
