@@ -200,8 +200,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (shortenBtnEl && form) {
     shortenBtnEl.addEventListener('click', (ev) => {
       try {
-        // debug helper
-        if (window && window.console && typeof window.console.debug === 'function') window.console.debug('shortenBtn clicked');
+        // visible debug helper (console.debug can be hidden by filters)
+        if (window && window.console && typeof window.console.log === 'function') window.console.log('shortenBtn clicked');
+        // small immediate feedback so users know the click was received
+        showToast('Creating short link…', 'info');
       } catch(e){}
       // Prefer requestSubmit when available (respects form validation)
       if (typeof form.requestSubmit === 'function') {
