@@ -49,7 +49,7 @@
           <h3 class="card-title">Shorten a long link</h3>
           <p class="card-sub">No credit card required</p>
 
-          <form class="shorten-form" action="#" onsubmit="return false;" aria-label="Shorten link form">
+          <form class="shorten-form" id="shortenForm" action="#" aria-label="Shorten link form">
             <label class="sr-only" for="url">URL</label>
             <div class="input-row">
               <input id="url" name="url" type="url" placeholder="https://example.com/my-long-url" required />
@@ -57,7 +57,24 @@
                 <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M13 5l7 7-7 7v-4H4v-6h9V5z"/></svg>
               </button>
             </div>
+
+            <div class="token-row">
+              <label for="token" class="token-label">API Token (optional)</label>
+              <input id="token" name="token" type="text" placeholder="Paste JWT to create links" />
+            </div>
+
+            <label class="sr-only" for="customAlias">Custom alias</label>
+            <input id="customAlias" name="customAlias" type="text" placeholder="Custom alias (optional, alphanumeric, ≤10 chars)" />
+
             <div class="form-hint">Instant links and optional analytics — simple and private.</div>
+
+            <div id="result" class="result" aria-live="polite" hidden>
+              <div class="result-inner">
+                <a id="resultLink" class="result-link" href="#" target="_blank" rel="noopener"></a>
+                <button id="copyBtn" class="copy-btn">Copy</button>
+              </div>
+              <div id="resultQr" class="result-qr"></div>
+            </div>
           </form>
         </div>
       </div>
