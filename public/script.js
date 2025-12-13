@@ -11,6 +11,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const y = new Date().getFullYear();
   const el = document.getElementById('year'); if (el) el.textContent = y;
 
+  // API base helper: allows switching requests to a different host for testing.
+  let apiBase = '';
+  function getApiUrl(path) {
+    // ensure single leading slash
+    if (!path.startsWith('/')) path = '/' + path;
+    return apiBase + path;
+  }
+
+  // If the page isn't being served from localhost, show a small test banner
+  // so the developer can route requests to a local API during testing.
+  try {
+    if (window.location && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      const banner = document.createElement('div');
+      banner.className = 'dev-api-banner';
+      banner.style.cssText = 'position:fixed;right:12px;bottom:12px;z-index:1400;background:rgba(11,23,36,0.9);color:var(--text);padding:8px 12px;border-radius:10px;box-shadow:0 8px 24px rgba(2,6,23,0.5);font-size:13px;display:flex;gap:8px;align-items:center';
+      banner.innerHTML = '<span style="opacity:.9">Using remote API</span>';
+      const btn = document.createElement('button');
+      btn.className = 'btn-ghost';
+      btn.textContent = 'Use local API';
+      btn.style.cssText = 'padding:6px 10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06);cursor:pointer;color:var(--muted)';
+      btn.addEventListener('click', () => {
+        apiBase = 'http://localhost:3000';
+        showToast('Switched requests to local API', 'info');
+        banner.innerHTML = '<span style="opacity:.9">Requests → local API</span>';
+      });
+      const reset = document.createElement('button');
+      reset.className = 'btn-ghost'; reset.textContent = 'Reset';
+      reset.style.cssText = 'padding:6px 10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06);cursor:pointer;color:var(--muted)';
+      reset.addEventListener('click', () => { apiBase = ''; showToast('Requests reset to current origin', 'info'); banner.innerHTML = '<span style="opacity:.9">Using remote API</span>'; });
+      banner.appendChild(btn);
+      banner.appendChild(reset);
+      document.body.appendChild(banner);
+    }
+  } catch (e) {}
+
   // Toast helper (single container)
   function showToast(message, type = '') {
     try {
@@ -89,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/urls', {
+      const res = await fetch(getApiUrl('/api/urls'), {
         method: 'POST',
         headers,
         body: JSON.stringify(payload)
@@ -304,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch(getApiUrl('/api/auth/login'), {
           method: 'POST', headers: { 'Content-Type':'application/json' },
           body: JSON.stringify({ email, password })
         });
