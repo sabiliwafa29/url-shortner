@@ -2,7 +2,17 @@ const Redis = require('ioredis');
 
 // If no REDIS_URL is provided, export a safe noop stub so the app can run
 // without a Redis instance (useful for deployments that don't configure Redis).
-const redisUrl = process.env.REDIS_URL || '';
+let redisUrl = process.env.REDIS_URL || '';
+// Treat localhost/127.0.0.1 Redis URLs as "not configured" in non-production
+// to avoid noisy ECONNREFUSED logs when developers don't run Redis locally.
+if (redisUrl && process.env.NODE_ENV !== 'production') {
+  const lc = redisUrl.toLowerCase();
+  if (lc.includes('localhost') || lc.includes('127.0.0.1')) {
+    console.warn('⚠️  REDIS_URL points to localhost and NODE_ENV!=production — ignoring local Redis for development');
+    redisUrl = '';
+  }
+}
+
 if (!redisUrl) {
   if (process.env.NODE_ENV !== 'test') {
     console.warn('⚠️  No REDIS_URL provided — running without Redis cache');

@@ -4,9 +4,19 @@ const pool = require('../config/database');
 const redis = require('../config/redis');
 const logger = require('../config/logger');
 
-const connection = { connection: { url: process.env.REDIS_URL || 'redis://localhost:6379' } };
+
+// Determine effective Redis URL and whether Redis should be considered disabled.
+let effectiveRedisUrl = process.env.REDIS_URL || '';
+if (effectiveRedisUrl && process.env.NODE_ENV !== 'production') {
+  const lc = effectiveRedisUrl.toLowerCase();
+  if (lc.includes('localhost') || lc.includes('127.0.0.1')) {
+    effectiveRedisUrl = '';
+  }
+}
 
 const isTest = process.env.NODE_ENV === 'test' || process.env.DISABLE_REDIS === 'true';
+const redisDisabled = isTest || !effectiveRedisUrl;
+const connection = { connection: { url: effectiveRedisUrl || '' } };
 
 async function processJob(job) {
   const { urlId, shortCode, shortUrl } = job.data;
@@ -38,8 +48,8 @@ async function processJob(job) {
   }
 }
 
-// Only create a real Worker in non-test environments
-if (isTest) {
+// Only create a real Worker if Redis is configured
+if (redisDisabled) {
   // Export a lightweight object for testing which exposes the processor
   module.exports = { process: processJob };
 } else {
