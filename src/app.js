@@ -15,6 +15,24 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 
+// Configure `trust proxy` when running behind a reverse proxy (e.g. Railway, Heroku).
+// express-rate-limit validates the X-Forwarded-For header and requires
+// `trust proxy` to be set when that header is present. Allow overriding via
+// the `TRUST_PROXY` env var. Commonly on PaaS you want `1` (one proxy).
+try {
+  const trustProxyEnv = process.env.TRUST_PROXY;
+  if (typeof trustProxyEnv !== 'undefined' && trustProxyEnv !== '') {
+    app.set('trust proxy', trustProxyEnv);
+    logger.info(`Express trust proxy set from TRUST_PROXY=${trustProxyEnv}`);
+  } else if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+    logger.info('Express trust proxy set to 1 (production)');
+  }
+} catch (e) {
+  // don't block startup on logging errors
+  try { logger.warn('Failed to set trust proxy', e); } catch (_) {}
+}
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
